@@ -1,7 +1,11 @@
 # Neo4j Spatial Demo for map visualization using yelp data set
 
 
-This repo contains the client code the python scripts for importing data that power [this demo](https://rishabhdhenkawat.github.io/CyanauraAPPmapDatabase/index.html)
+This repo contains the client code the python scripts for importing data that power.
+To run the program Follow the steps:
+1) Clone the repo.
+2)Unzip the file.
+3)Run file index.html in your web browser.
 
 
 ![screenshot](scdemo_screenshot.png)
