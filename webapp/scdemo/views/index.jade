@@ -1,0 +1,161 @@
+extends layout
+
+block content
+  
+  
+  div(id="desc")
+    h1= title
+    select(id="category")
+      option(value="Restaurants") Restaurants
+      option(value="Shopping") Shopping
+      option(value="Food") Food
+      option(value="Beauty & Spas") Beauty & Spas
+      option(value="Nightlife") Nightlife
+      option(value="Bars") Bars
+      option(value="Health & Medical") Health & Medical
+      option(value="Automotive") Automotive
+      option(value="Home Services") Home Services
+      option(value="Fashion") Fashion
+      option(value="Active Life") Active Life
+      option(value="Mexican") Mexican
+      option(value="Event Planning & Services") Event Planning & Services
+      option(value="Pizza") Pizza
+      option(value="Hotels & Travel") Hotels & Travel
+      option(value="Arts & Entertainment") Arts & Entertainment
+      option(value="Sandwiches") Sandwiches
+      option(value="Coffee & Tea") Coffee & Tea
+      option(value="Auto Repair") Auto Repair
+      option(value="Grocery") Grocery
+      option(value="Pets") Pets
+      option(value="Doctors") Doctors
+      option(value="Fitness & Instruction") Fitness & Instruction
+      option(value="Breakfast & Brunch") Breakfast & Brunch
+      option(value="Ice Cream & Frozen Yogurt") Ice Cream & Frozen Yogurt
+      option(value="Bakeries") Bakeries
+      option(value="Real Estate") Real Estate
+      option(value="Dentists") Dentists
+      option(value="Pubs") Pubs
+      option(value="Gyms") Gyms
+      option(value="Sporting Goods") Sporting Goods
+      option(value="Gas & Service Stations") Gas & Service Stations
+      option(value="Banks & Credit Unions") Banks & Credit Unions
+
+
+    p Select a category then use the polygon icon below to draw a polygon on the map! Double click when you have selected the last point. Businesses matching the selected category will be displayed within your polygon.
+    
+
+  div(id="map")
+
+  script.
+    L.mapbox.accessToken = 'pk.eyJ1IjoibHlvbndqIiwiYSI6IndwUXlLUjQifQ.DIiytYUASOcXjKdpXW8S-Q';
+    var map = L.mapbox.map('map', 'lyonwj.j5m52ga3')
+    .setView([33.47870401153533, -112.0305061340332], 14);
+
+    var featureGroup = L.featureGroup().addTo(map);
+    var dataLayer = L.mapbox.featureLayer().addTo(map);
+    var current_poly;
+    var url = "http://192.241.222.136:7474/scdemo/scdemo/intersects"
+
+    function dataToMarkers(data) {
+        data = JSON.parse(data)       
+        var geojson = { type: 'FeatureCollection', features: [] };
+        
+        for (var i = 0; i < data.length; i++) {
+        
+        if (data[i].lon === null || data[i].lat === null) continue;
+        geojson.features.push({
+          type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [ data[i].lon, data[i].lat]
+            },
+          properties: {
+        'marker-size': "large",
+        'marker-color': "#c091e6",
+        'title': data[i].name
+        }
+        });
+      }
+      dataLayer.setGeoJSON([]);
+      dataLayer.setGeoJSON(geojson);
+      }
+
+    $("#category").change(function() {
+      if (current_poly){
+
+        data = {polygon: current_poly, category: $("#category").val()}
+        $.ajax({
+          url: url,
+          data: data,
+          success: dataToMarkers
+          //dataType: dataType
+        });
+        }
+      });
+
+    var drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: featureGroup
+      },
+      draw: {
+        polygon: true,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false
+      }
+    }).addTo(map);
+
+    map.on('draw:created', showPolygonMarkers);
+    map.on('draw:edited', showPolygonMarkersEdited);
+    //map.on('draw:deleted', )
+
+    function showPolygonMarkersEdited(e) {
+      e.layers.eachLayer(function(layer) {
+        showPolygonMarkers({ layer: layer });
+      });
+    }
+    function showPolygonMarkers(e) {
+      console.log(e);
+      console.log($("#category").val());
+      featureGroup.clearLayers();
+      featureGroup.addLayer(e.layer);
+  
+      coords = e.layer['_latlngs']
+      first = coords[0]['lat'] + " " + coords[0]['lng']+", "
+
+      wkt = "POLYGON (("
+      coords.forEach(getCoords)
+      wkt = wkt + first.substring(0, first.length-2) + "))"
+      console.log(wkt)
+
+      
+      current_poly = wkt
+      data = {polygon: wkt, category: $("#category").val()}
+      success = function(data){
+        console.log(data)
+      }
+
+
+      
+
+      $.ajax({
+        url: url,
+        data: data,
+        success: dataToMarkers
+        //dataType: dataType
+      });
+
+
+
+
+    }
+
+    function getCoords(e) {
+      group = e['lat'] + " " + e['lng']+", "
+      console.log(group)
+      wkt = wkt + group
+    }
+
+
+
